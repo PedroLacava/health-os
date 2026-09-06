@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: health_os
+      POSTGRES_USER: health_os
+      POSTGRES_PASSWORD: health_os
+    ports: ["5432:5432"]
+    volumes: ["health_os_pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U health_os"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  health_os_pgdata:
