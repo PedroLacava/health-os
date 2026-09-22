@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#071a17" />
+    <title>Health OS</title>
+    <link rel="preconnect" href="https://esm.sh" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Health OS">
+          <span class="brand-mark">H</span>
+          <span>Health OS</span>
+        </a>
+        <button id="logout" class="button button-quiet hidden" type="button">Sair</button>
+      </header>
+
+      <section id="login" class="login-panel">
+        <div>
+          <p class="eyebrow">Seu histórico em um só lugar</p>
+          <h1>Entenda seu corpo antes de decidir o próximo treino.</h1>
+          <p class="lede">Entre pelo e-mail cadastrado no Health OS. Você receberá um link seguro, sem precisar criar senha.</p>
+        </div>
+        <form id="login-form" class="login-form">
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="seu@email.com" required />
+          <button class="button button-primary" type="submit">Enviar link de acesso</button>
+          <p id="login-message" class="form-message" role="status"></p>
+        </form>
+      </section>
+
+      <section id="dashboard" class="hidden">
+        <div class="hero">
+          <div>
+            <p class="eyebrow">Visão geral</p>
+            <h1>Como você está hoje</h1>
+            <p id="freshness" class="muted">Carregando dados...</p>
+          </div>
+          <div class="period-control" aria-label="Período dos gráficos">
+            <button class="period active" data-days="30" type="button">30 dias</button>
+            <button class="period" data-days="90" type="button">90 dias</button>
+          </div>
+        </div>
+
+        <section id="summary-cards" class="summary-grid" aria-label="Indicadores atuais"></section>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Tendências</p>
+            <h2>Recuperação e saúde</h2>
+          </div>
+        </div>
+        <section id="trend-grid" class="trend-grid"></section>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Treinos</p>
+            <h2>Atividades recentes</h2>
+          </div>
+        </div>
+        <section id="activities" class="activity-list"></section>
+
+        <p id="dashboard-error" class="error-message hidden" role="alert"></p>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
