@@ -33,6 +33,7 @@ A API ficará disponível em `http://localhost:3000`. Verifique com `curl http:/
 | `GET` | `/v1/metrics?from=&to=&type=` | Lista métricas normalizadas |
 
 Se `GARMIN_WEBHOOK_SECRET` estiver definido, envie o mesmo valor no header `x-webhook-secret`.
+Configure também `HEALTH_OS_USER_ID` com o UUID do proprietário dos dados.
 
 ## Banco
 
@@ -41,6 +42,19 @@ Rode `db/migrations/001_initial.sql` no SQL Editor do Supabase ou use `npm run d
 ## Garmin
 
 O backend está preparado para notificações da Garmin Health API. As credenciais são liberadas após cadastro e aprovação do aplicativo. Até lá, use `fixtures/garmin-webhook.json` para testes locais.
+
+### Importação histórica
+
+Descompacte a exportação oficial da Garmin e gere lotes SQL idempotentes:
+
+```bash
+npm run garmin:prepare -- \
+  --source /caminho/para/exportacao \
+  --user-id UUID_DO_USUARIO \
+  --output .garmin-import
+```
+
+O importador inclui atividades, resumos diários, sono, Health Status, prontidão, carga e status de treino, VO2 máximo e previsões de prova. Identificadores internos, contatos, imagens e coordenadas são descartados. A pasta `.garmin-import` contém dados privados e nunca deve ser versionada.
 
 ## Segurança
 
