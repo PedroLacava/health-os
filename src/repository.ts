@@ -1,3 +1,64 @@
 import type { Database } from "./db.js";
 import type { NormalizedMetric, Provider } from "./domain.js";
-export class HealthRepository{constructor(private readonly db:Database){}async ping(){await this.db.query("select 1");}async saveEvent(input:{provider:Provider;externalId:string;eventType:string;payload:unknown}){const r=await this.db.query<{id:string}>(`insert into raw_events(provider,external_id,event_type,payload) values($1,$2,$3,$4::jsonb) on conflict(provider,external_id,event_type) do nothing returning id`,[input.provider,input.externalId,input.eventType,JSON.stringify(input.payload)]);return r.rows[0]?.id;}async saveMetric(provider:Provider,m:NormalizedMetric,rawEventId:string){await this.db.query(`insert into metrics(provider,external_id,type,recorded_at,ended_at,value,unit,data,raw_event_id) values($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9) on conflict(provider,external_id,type) do update set recorded_at=excluded.recorded_at,ended_at=excluded.ended_at,value=excluded.value,unit=excluded.unit,data=excluded.data,raw_event_id=excluded.raw_event_id,updated_at=now()`,[provider,m.externalId,m.type,m.recordedAt,m.endedAt,m.value,m.unit,JSON.stringify(m.data),rawEventId]);}async requestSync(provider:Provider){const r=await this.db.query<{id:string;status:string}>("insert into sync_runs(provider,status) values($1,'queued') returning id,status",[provider]);return r.rows[0];}async listMetrics(f:{from?:Date;to?:Date;type?:string}){const c:string[]=[];const v:unknown[]=[];if(f.from){v.push(f.from);c.push(`recorded_at >= $${v.length}`)}if(f.to){v.push(f.to);c.push(`recorded_at <= $${v.length}`)}if(f.type){v.push(f.type);c.push(`type = $${v.length}`)}const r=await this.db.query(`select * from metrics ${c.length?`where ${c.join(" and ")}`:""} order by recorded_at desc limit 1000`,v);return r.rows;}}
+
+export class HealthRepository{
+  constructor(private readonly db:Database){}
+
+  async ping(){await this.db.query("select 1");}
+
+  async saveEvent(input:{provider:Provider;externalId:string;eventType:string;payload:unknown}){
+    const r=await this.db.query<{id:string}>(`insert into raw_events(provider,external_id,event_type,payload)
+      values($1,$2,$3,$4::jsonb)
+      on conflict(provider,external_id,event_type) do nothing returning id`,
+      [input.provider,input.externalId,input.eventType,JSON.stringify(input.payload)]);
+    return r.rows[0]?.id;
+  }
+
+  async saveMetric(provider:Provider,m:NormalizedMetric,rawEventId:string){
+    await this.db.query(`insert into metrics(provider,external_id,type,recorded_at,ended_at,value,unit,data,raw_event_id,provenance,confidence)
+      values($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11)
+      on conflict(provider,external_id,type) do update set
+        recorded_at=excluded.recorded_at,ended_at=excluded.ended_at,value=excluded.value,
+        unit=excluded.unit,data=excluded.data,raw_event_id=excluded.raw_event_id,
+        provenance=excluded.provenance,confidence=excluded.confidence,updated_at=now()`,
+      [provider,m.externalId,m.type,m.recordedAt,m.endedAt,m.value,m.unit,JSON.stringify(m.data),rawEventId,m.provenance??"measured",m.confidence]);
+  }
+
+  async requestSync(provider:Provider){
+    const r=await this.db.query<{id:string;status:string}>("insert into sync_runs(provider,status) values($1,'queued') returning id,status",[provider]);
+    return r.rows[0];
+  }
+
+  async listMetrics(f:{from?:Date;to?:Date;type?:string}){
+    const c:string[]=[];const v:unknown[]=[];
+    if(f.from){v.push(f.from);c.push(`recorded_at >= $${v.length}`)}
+    if(f.to){v.push(f.to);c.push(`recorded_at <= $${v.length}`)}
+    if(f.type){v.push(f.type);c.push(`type = $${v.length}`)}
+    const r=await this.db.query(`select * from metrics ${c.length?`where ${c.join(" and ")}`:""} order by recorded_at desc limit 1000`,v);
+    return r.rows;
+  }
+
+  async addHydration(input:{recordedAt?:Date;volumeMl:number;source?:string}){
+    const r=await this.db.query("insert into hydration_events(recorded_at,volume_ml,source) values($1,$2,$3) returning *",
+      [input.recordedAt??new Date(),input.volumeMl,input.source??"manual"]);
+    return r.rows[0];
+  }
+
+  async addCheckin(input:Record<string,unknown>){
+    const r=await this.db.query(`insert into daily_checkins(recorded_at,energy,concentration,stress,hunger,physical_fatigue,wellbeing,notes)
+      values($1,$2,$3,$4,$5,$6,$7,$8) returning *`,
+      [input.recordedAt??new Date(),input.energy,input.concentration,input.stress,input.hunger,input.physicalFatigue,input.wellbeing,input.notes]);
+    return r.rows[0];
+  }
+
+  async upsertWorkContext(input:Record<string,unknown>){
+    const r=await this.db.query(`insert into work_context(work_date,workload,pressure,interruptions,sense_of_control,meeting_minutes,tags,notes)
+      values($1,$2,$3,$4,$5,$6,$7,$8)
+      on conflict(work_date) do update set workload=excluded.workload,pressure=excluded.pressure,
+      interruptions=excluded.interruptions,sense_of_control=excluded.sense_of_control,
+      meeting_minutes=excluded.meeting_minutes,tags=excluded.tags,notes=excluded.notes,updated_at=now()
+      returning *`,
+      [input.workDate,input.workload,input.pressure,input.interruptions,input.senseOfControl,input.meetingMinutes,input.tags??[],input.notes]);
+    return r.rows[0];
+  }
+}
