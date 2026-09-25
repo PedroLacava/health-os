@@ -2,6 +2,8 @@
 
 Backend para receber dados de diferentes fontes de saúde, preservar o payload original e convertê-lo para um modelo comum.
 
+O repositório também inclui o primeiro painel web, com login por link enviado por e-mail e leitura protegida pelo RLS do Supabase.
+
 ## Primeira entrega
 
 - API TypeScript com Fastify
@@ -22,17 +24,26 @@ npm run dev
 ```
 
 A API ficará disponível em `http://localhost:3000`. Verifique com `curl http://localhost:3000/health`.
+O painel fica disponível em `http://localhost:3000`.
 
 ## Endpoints
 
 | Método | Caminho | Uso |
 |---|---|---|
 | `GET` | `/health` | Estado da aplicação e do banco |
+| `GET` | `/` | Painel web do Health OS |
+| `GET` | `/v1/client-config` | Configuração pública do cliente Supabase |
 | `POST` | `/v1/integrations/garmin/webhooks` | Recebe notificações Garmin |
 | `POST` | `/v1/integrations/:provider/sync` | Registra solicitação de sincronização |
 | `GET` | `/v1/metrics?from=&to=&type=` | Lista métricas normalizadas |
 
 Se `GARMIN_WEBHOOK_SECRET` estiver definido, envie o mesmo valor no header `x-webhook-secret`.
+Configure também `HEALTH_OS_USER_ID` com o UUID do proprietário dos dados.
+Os endpoints de métricas e sincronização exigem um JWT válido do Supabase no header `Authorization`.
+
+## Painel web
+
+Configure `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY`. O painel usa login sem senha por e-mail e consulta apenas os dados pertencentes ao usuário autenticado. Para o link de acesso funcionar em produção, adicione a URL publicada à lista de Redirect URLs do Supabase Auth.
 
 ## Banco
 
@@ -41,6 +52,19 @@ Rode `db/migrations/001_initial.sql` no SQL Editor do Supabase ou use `npm run d
 ## Garmin
 
 O backend está preparado para notificações da Garmin Health API. As credenciais são liberadas após cadastro e aprovação do aplicativo. Até lá, use `fixtures/garmin-webhook.json` para testes locais.
+
+### Importação histórica
+
+Descompacte a exportação oficial da Garmin e gere lotes SQL idempotentes:
+
+```bash
+npm run garmin:prepare -- \
+  --source /caminho/para/exportacao \
+  --user-id UUID_DO_USUARIO \
+  --output .garmin-import
+```
+
+O importador inclui atividades, resumos diários, sono, Health Status, prontidão, carga e status de treino, VO2 máximo e previsões de prova. Identificadores internos, contatos, imagens e coordenadas são descartados. A pasta `.garmin-import` contém dados privados e nunca deve ser versionada.
 
 ## Segurança
 
