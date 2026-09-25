@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#071a17" />
+    <meta name="theme-color" content="#f5f7fa" />
     <title>Health OS</title>
     <link rel="preconnect" href="https://esm.sh" />
     <link rel="stylesheet" href="/styles.css" />
@@ -20,14 +20,15 @@
 
       <section id="login" class="login-panel">
         <div>
-          <p class="eyebrow">Seu histórico em um só lugar</p>
-          <h1>Entenda seu corpo antes de decidir o próximo treino.</h1>
-          <p class="lede">Entre pelo e-mail cadastrado no Health OS. Você receberá um link seguro, sem precisar criar senha.</p>
+          <p class="eyebrow">Health OS</p>
+          <h1>Seu histórico de saúde e treino.</h1>
+          <p class="lede">Acompanhe sono, recuperação e atividades em um único painel.</p>
         </div>
         <form id="login-form" class="login-form">
           <label for="email">E-mail</label>
           <input id="email" name="email" type="email" autocomplete="email" placeholder="seu@email.com" required />
           <button class="button button-primary" type="submit">Enviar link de acesso</button>
+          <p class="form-message">Use o e-mail cadastrado. O acesso é feito por um link enviado à sua caixa de entrada.</p>
           <p id="login-message" class="form-message" role="status"></p>
         </form>
       </section>
@@ -35,7 +36,7 @@
       <section id="dashboard" class="hidden">
         <div class="hero">
           <div>
-            <p class="eyebrow">Visão geral</p>
+            <p class="eyebrow">Resumo</p>
             <h1>Como você está hoje</h1>
             <p id="freshness" class="muted">Carregando dados...</p>
           </div>
